@@ -544,8 +544,8 @@ Auth  : Personal Access Token
 **Thadshayani Rasanehru**
 Senior Data Engineer | Azure | Databricks | PySpark | Delta Lake | Power BI
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0077B5?style=flat&logo=linkedin)](https://linkedin.com/in/yourprofile)
-[![GitHub](https://img.shields.io/badge/GitHub-Follow-181717?style=flat&logo=github)](https://github.com/yourusername)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0077B5?style=flat&logo=linkedin)]([https://linkedin.com/in/yourprofile](https://www.linkedin.com/in/thaadshaayani-rasanehru/))
+[![GitHub](https://img.shields.io/badge/GitHub-Follow-181717?style=flat&logo=github)](https://github.com/Thaadshaayani-R))
 
 ---
 
