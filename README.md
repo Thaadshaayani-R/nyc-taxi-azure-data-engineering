@@ -1,4 +1,4 @@
-# NYC Taxi Analytics — Azure Data Engineering Pipeline
+# NYC Taxi Analytics - Azure Data Engineering Pipeline
 
 ![Azure](https://img.shields.io/badge/Azure-Data%20Factory-0078D4?style=flat&logo=microsoft-azure)
 ![Databricks](https://img.shields.io/badge/Databricks-PySpark-FF3621?style=flat&logo=databricks)
