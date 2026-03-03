@@ -1,0 +1,28 @@
+{
+    "name": "ds_http_delivery_src",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "ls_http_logistics_api",
+            "type": "LinkedServiceReference"
+        },
+        "parameters": {
+            "p_month": {
+                "type": "string"
+            }
+        },
+        "annotations": [],
+        "type": "Parquet",
+        "typeProperties": {
+            "location": {
+                "type": "HttpServerLocation",
+                "relativeUrl": {
+                    "value": "/trip-data/green_tripdata_2023-@{dataset().p_month}.parquet",
+                    "type": "Expression"
+                }
+            },
+            "compressionCodec": "snappy"
+        },
+        "schema": []
+    },
+    "type": "Microsoft.DataFactory/factories/datasets"
+}

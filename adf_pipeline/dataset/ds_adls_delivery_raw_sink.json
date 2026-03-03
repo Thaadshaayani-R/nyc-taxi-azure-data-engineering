@@ -1,0 +1,21 @@
+{
+    "name": "ds_adls_delivery_raw_sink",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "ls_adls_logistics_store",
+            "type": "LinkedServiceReference"
+        },
+        "annotations": [],
+        "type": "Parquet",
+        "typeProperties": {
+            "location": {
+                "type": "AzureBlobFSLocation",
+                "folderPath": "delivery_records_2023",
+                "fileSystem": "bronze"
+            },
+            "compressionCodec": "snappy"
+        },
+        "schema": []
+    },
+    "type": "Microsoft.DataFactory/factories/datasets"
+}

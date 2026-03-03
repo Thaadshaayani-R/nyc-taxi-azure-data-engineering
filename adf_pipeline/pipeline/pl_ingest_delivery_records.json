@@ -1,0 +1,86 @@
+{
+    "name": "pl_ingest_delivery_records",
+    "properties": {
+        "activities": [
+            {
+                "name": "forEach_monthly_delivery",
+                "type": "ForEach",
+                "dependsOn": [],
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@range(1,12)",
+                        "type": "Expression"
+                    },
+                    "isSequential": true,
+                    "activities": [
+                        {
+                            "name": "copy_delivery_data",
+                            "type": "Copy",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "source": {
+                                    "type": "ParquetSource",
+                                    "storeSettings": {
+                                        "type": "HttpReadSettings",
+                                        "requestMethod": "GET"
+                                    },
+                                    "formatSettings": {
+                                        "type": "ParquetReadSettings"
+                                    }
+                                },
+                                "sink": {
+                                    "type": "ParquetSink",
+                                    "storeSettings": {
+                                        "type": "AzureBlobFSWriteSettings"
+                                    },
+                                    "formatSettings": {
+                                        "type": "ParquetWriteSettings"
+                                    }
+                                },
+                                "enableStaging": false,
+                                "translator": {
+                                    "type": "TabularTranslator",
+                                    "typeConversion": true,
+                                    "typeConversionSettings": {
+                                        "allowDataTruncation": true,
+                                        "treatBooleanAsNumber": false
+                                    }
+                                }
+                            },
+                            "inputs": [
+                                {
+                                    "referenceName": "ds_http_delivery_src",
+                                    "type": "DatasetReference",
+                                    "parameters": {
+                                        "p_month": {
+                                            "value": "@if(less(item(),10),concat('0',string(item())),string(item()))",
+                                            "type": "Expression"
+                                        }
+                                    }
+                                }
+                            ],
+                            "outputs": [
+                                {
+                                    "referenceName": "ds_adls_delivery_raw_sink",
+                                    "type": "DatasetReference"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        ],
+        "annotations": [],
+        "lastPublishTime": "2026-02-18T09:42:44Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}

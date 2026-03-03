@@ -1,0 +1,82 @@
+{
+  "name": "logistics_pipeline",
+  "email_notifications": {
+    "no_alert_for_skipped_runs": false
+  },
+  "webhook_notifications": {},
+  "timeout_seconds": 0,
+  "schedule": {
+    "quartz_cron_expression": "19 0 6 * * ?",
+    "timezone_id": "Asia/Dubai",
+    "pause_status": "UNPAUSED"
+  },
+  "max_concurrent_runs": 1,
+  "tasks": [
+    {
+      "task_key": "01_silver_cleanse",
+      "run_if": "ALL_SUCCESS",
+      "notebook_task": {
+        "notebook_path": "/Workspace/Users/your-email@outlook.com/logistics_project/nb_silver_cleanse_deliveries",
+        "source": "WORKSPACE"
+      },
+      "existing_cluster_id": "your-cluster-id",
+      "timeout_seconds": 0,
+      "email_notifications": {},
+      "webhook_notifications": {}
+    },
+    {
+      "task_key": "02_gold_delta_tables",
+      "depends_on": [
+        {
+          "task_key": "01_silver_cleanse"
+        }
+      ],
+      "run_if": "ALL_SUCCESS",
+      "notebook_task": {
+        "notebook_path": "/Workspace/Users/thaadshaayani20@outlook.com/logistics_project/nb_gold_delta_tables",
+        "source": "WORKSPACE"
+      },
+      "existing_cluster_id": "your-cluster-id",
+      "timeout_seconds": 0,
+      "email_notifications": {},
+      "webhook_notifications": {}
+    },
+    {
+      "task_key": "03_merge_incremental",
+      "depends_on": [
+        {
+          "task_key": "02_gold_delta_tables"
+        }
+      ],
+      "run_if": "ALL_SUCCESS",
+      "notebook_task": {
+        "notebook_path": "/Workspace/Users/thaadshaayani20@outlook.com/logistics_project/nb_merge_incremental",
+        "source": "WORKSPACE"
+      },
+      "existing_cluster_id": "your-cluster-id",
+      "timeout_seconds": 0,
+      "email_notifications": {},
+      "webhook_notifications": {}
+    },
+    {
+      "task_key": "04_audit_log04_audit_log",
+      "depends_on": [
+        {
+          "task_key": "03_merge_incremental"
+        }
+      ],
+      "run_if": "ALL_SUCCESS",
+      "notebook_task": {
+        "notebook_path": "/Workspace/Users/thaadshaayani20@outlook.com/logistics_project/nb_audit_log",
+        "source": "WORKSPACE"
+      },
+      "existing_cluster_id": "your-cluster-id",
+      "timeout_seconds": 0,
+      "email_notifications": {}
+    }
+  ],
+  "queue": {
+    "enabled": true
+  },
+  "performance_target": "PERFORMANCE_OPTIMIZED"
+}
