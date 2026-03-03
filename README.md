@@ -29,57 +29,57 @@ End-to-end production-grade Azure data engineering pipeline processing **745,796
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         DATA SOURCES                                │
-│                                                                     │
-│  Source 1 — NYC TLC API           Source 2 — Raw Data (Local)      │
-│  green_tripdata_2023-{01..12}     ├── taxi_zone_lookup.xlsx         │
-│  12 monthly parquet files         └── trip_type.xlsx                │
-│  787,060 trip records             (dimension reference files)       │
-└──────────────────┬────────────────────────────┬─────────────────────┘
-                   │                            │
-                   ▼                            ▼
-        ┌──────────────────┐      ┌─────────────────────────┐
-        │  Azure Data      │      │  Manually uploaded to   │
-        │  Factory (ADF)   │      │  ADLS Gen2              │
-        │  ForEach × 12    │      │  raw-data container     │
-        └────────┬─────────┘      └────────────┬────────────┘
-                 │                             │
-                 ▼                             │
-        ┌─────────────────┐                   │
-        │  BRONZE LAYER   │                   │
-        │  ADLS Gen2      │                   │
-        │  787,060 records│                   │
-        │  Raw parquet    │                   │
-        │  Source of truth│                   │
-        └────────┬────────┘                   │
-                 │                            │
-                 ▼                            ▼
-        ┌───────────────────────────────────────────┐
-        │             SILVER LAYER                  │
-        │  Databricks PySpark — 13 Transformations  │
-        │  ADLS Gen2 — Partitioned parquet          │
-        │  745,796 clean records · 48 parquet files │
-        └──────────────────┬────────────────────────┘
-                           │
-                           ▼
-        ┌───────────────────────────────────────────┐
-        │              GOLD LAYER                   │
-        │  Delta Lake — Star Schema                 │
-        │  Unity Catalog — logistics_db             │
-        │                                           │
-        │  fact_deliveries (745,796) ◄── Silver     │
+┌──────────────────────────────────────────────────────────────────────┐
+│                          DATA SOURCES                                │
+│                                                                      │
+│   Source 1 — NYC TLC API            Source 2 — Raw Data (Local)     │
+│   green_tripdata_2023-{01..12}      ├── taxi_zone_lookup.xlsx        │
+│   12 monthly parquet files          └── trip_type.xlsx               │
+│   787,060 trip records              (dimension reference files)      │
+└──────────────────┬──────────────────────────┬────────────────────────┘
+                   │                          │
+                   ▼                          ▼
+        ┌──────────────────┐     ┌────────────────────────┐
+        │  Azure Data      │     │  Manually uploaded to  │
+        │  Factory (ADF)   │     │  ADLS Gen2             │
+        │  ForEach × 12    │     │  raw-data container    │
+        └────────┬─────────┘     └───────────┬────────────┘
+                 │                           │
+                 ▼                           │
+        ┌─────────────────┐                  │
+        │  BRONZE LAYER   │                  │
+        │  ADLS Gen2      │                  │
+        │  787,060 records│                  │
+        │  Raw parquet    │                  │
+        │  Source of truth│                  │
+        └────────┬────────┘                  │
+                 │                           │
+                 ▼                           ▼
+        ┌────────────────────────────────────────────┐
+        │              SILVER LAYER                  │
+        │  Databricks PySpark — 13 Transformations   │
+        │  ADLS Gen2 — Partitioned parquet           │
+        │  745,796 clean records · 48 parquet files  │
+        └───────────────────┬────────────────────────┘
+                            │
+                            ▼
+        ┌────────────────────────────────────────────┐
+        │               GOLD LAYER                   │
+        │  Delta Lake — Star Schema                  │
+        │  Unity Catalog — logistics_db              │
+        │                                            │
+        │  fact_deliveries (745,796) ◄── Silver      │
         │  dim_trip_type   (2 rows)  ◄── trip_type.xlsx
         │  dim_trip_zone   (265 rows)◄── taxi_zone_lookup.xlsx
         │  audit_log       ◄── pipeline observability│
-        │  watermark       ◄── incremental tracking │
-        └──────────────────┬────────────────────────┘
-                           │  DirectQuery
-                           ▼
-        ┌───────────────────────────────────────────┐
-        │  POWER BI DASHBOARD                       │
-        │  6 visualizations · Live · $13.5M revenue │
-        └───────────────────────────────────────────┘
+        │  watermark       ◄── incremental tracking  │
+        └───────────────────┬────────────────────────┘
+                            │  DirectQuery
+                            ▼
+        ┌────────────────────────────────────────────┐
+        │  POWER BI DASHBOARD                        │
+        │  6 visualizations · Live · $13.5M revenue  │
+        └────────────────────────────────────────────┘
 ```
 
 ---
@@ -146,40 +146,40 @@ Two Excel files in `raw_data/` manually uploaded to ADLS Gen2 raw-data container
 nyc-taxi-azure-data-engineering/
 ├── README.md
 ├── notebooks/
-│   ├── nb_silver_cleanse_deliveries.ipynb  # 13 PySpark transformations
-│   ├── nb_gold_delta_tables.ipynb          # Delta table creation + dim loading
-│   ├── nb_audit_log.ipynb                  # Pipeline observability
-│   ├── nb_incremental_watermark.ipynb      # Watermark-based incremental load
-│   └── nb_merge_incremental.ipynb          # Delta MERGE operations
+│   ├── nb_silver_cleanse_deliveries.ipynb   # 13 PySpark transformations
+│   ├── nb_gold_delta_tables.ipynb           # Delta table creation + dim loading
+│   ├── nb_audit_log.ipynb                   # Pipeline observability
+│   ├── nb_incremental_watermark.ipynb       # Watermark-based incremental load
+│   └── nb_merge_incremental.ipynb           # Delta MERGE operations
 ├── adf_pipeline/
 │   ├── pipeline/
-│   │   └── pl_ingest_delivery_records.json # ADF pipeline definition
+│   │   └── pl_ingest_delivery_records.json  # ADF pipeline definition
 │   ├── dataset/
-│   │   ├── ds_adls_delivery_raw_sink.json  # ADLS sink dataset
-│   │   └── ds_http_delivery_src.json       # HTTP source dataset
+│   │   ├── ds_adls_delivery_raw_sink.json   # ADLS sink dataset
+│   │   └── ds_http_delivery_src.json        # HTTP source dataset
 │   └── linkedService/
-│       ├── ls_adls_logistics_store.json    # ADLS linked service
-│       └── ls_http_logistics_api.json      # HTTP linked service
+│       ├── ls_adls_logistics_store.json     # ADLS linked service
+│       └── ls_http_logistics_api.json       # HTTP linked service
 ├── databricks_workflow/
-│   └── logistics_pipeline_workflow.json    # Databricks workflow definition
+│   └── logistics_pipeline_workflow.json     # Databricks workflow definition
 ├── raw_data/
-│   ├── taxi_zone_lookup.xlsx               # TLC official zone reference (265 zones)
-│   └── trip_type.xlsx                      # Trip type code reference (2 rows)
+│   ├── taxi_zone_lookup.xlsx                # TLC official zone reference (265 zones)
+│   └── trip_type.xlsx                       # Trip type code reference (2 rows)
 ├── powerbi/
-│   └── nyc_taxi_analytics_dashboard.pbix   # Power BI dashboard file
+│   └── nyc_taxi_analytics_dashboard.pbix    # Power BI dashboard file
 ├── docs/
-│   └── nyc_taxi_project_documentation.docx # Full project documentation
+│   └── nyc_taxi_project_documentation.docx
 └── screenshots/
-    ├── dashboard_full.png                  # Power BI dashboard
-    ├── adf_pipeline.png                    # ADF ForEach pipeline canvas
-    ├── databricks_workflow_list.png        # Workflow run history list
-    ├── databricks_workflow_graph.png       # Workflow task graph
-    ├── databricks_workflow_run.png         # Single run details
-    ├── databricks_workflow_timeline.png    # Run timeline view
-    ├── delta_history.png                   # 42 Delta versions
-    ├── audit_log.png                       # Audit log table data
-    ├── unity_catalog.png                   # Unity Catalog 5 tables
-    └── silver_data.png                     # Transformed Silver data sample
+    ├── dashboard_full.png                   # Power BI dashboard
+    ├── adf_pipeline.png                     # ADF ForEach pipeline canvas
+    ├── databricks_workflow_list.png         # Workflow run history list
+    ├── databricks_workflow_graph.png        # Workflow task dependency graph
+    ├── databricks_workflow_run.png          # Single run detail view
+    ├── databricks_workflow_timeline.png     # Workflow timeline view
+    ├── delta_history.png                    # 42 Delta versions
+    ├── audit_log.png                        # Audit log table data
+    ├── unity_catalog.png                    # Unity Catalog 5 tables
+    └── silver_data.png                      # Transformed Silver data sample
 ```
 
 ---
@@ -252,40 +252,36 @@ Delta Lake features implemented:
 
 ### 4. Databricks Workflow — Automated Pipeline
 
-![Databricks Workflow](screenshots/databricks_workflow_list.png)
+![Databricks Workflow List](screenshots/databricks_workflow_list.png)
 
 ![Databricks Workflow Graph](screenshots/databricks_workflow_graph.png)
 
 4-task automated pipeline scheduled daily at **06:00 AM (UTC+04:00 — Asia/Dubai)**:
 
 ```
-01_silver_cleanse     → PySpark 13 transformations
+01_silver_cleanse     → ~18 min  (13 PySpark transforms)
         ↓ (only if succeeded)
-02_gold_delta_tables  → Delta writes + dim table loading
+02_gold_delta_tables  →  ~4 min  (Delta writes + dim loading)
         ↓ (only if succeeded)
-03_merge_incremental  → Delta MERGE on fact_deliveries
+03_merge_incremental  → ~40 sec  (Delta MERGE on fact table)
         ↓ (only if succeeded)
-04_audit_log          → Write audit record
-
-Cluster  : Single node · Standard_DC4as_v5 · DBR 13.3 LTS
-Job ID   : 551166306114141
-Creator  : Thadshayani Rasanehru
+04_audit_log          →  ~9 sec  (write audit record)
 ```
 
+Confirmed production run history — **all succeeded**:
+
+| Date | Duration | Type | Status |
+|---|---|---|---|
+| Mar 03, 2026 | 18m 40s | Scheduled | ✅ Succeeded |
+| Mar 02, 2026 | 17m 17s | Scheduled | ✅ Succeeded |
+| Mar 01, 2026 | 18m 48s | Scheduled | ✅ Succeeded |
+| Feb 28, 2026 | 18m 16s | Scheduled | ✅ Succeeded |
+| Feb 27, 2026 | 18m 37s | Scheduled | ✅ Succeeded |
+| Feb 26, 2026 | 16m 42s | Scheduled | ✅ Succeeded |
+| Feb 25, 2026 | 18m 18s | Scheduled | ✅ Succeeded |
+| Feb 24, 2026 | 34m 41s | Manual | ✅ Succeeded |
+
 > Each task runs **only if the previous task succeeded** — bad Silver data never reaches Gold.
-
-**Run History — All Succeeded ✅**
-
-| Date | Duration | Launched By |
-|---|---|---|
-| Mar 03, 2026 06:00 AM | 18m 40s | Scheduler |
-| Mar 02, 2026 06:00 AM | 17m 17s | Scheduler |
-| Mar 01, 2026 06:00 AM | 18m 48s | Scheduler |
-| Feb 28, 2026 06:00 AM | 18m 16s | Scheduler |
-| Feb 27, 2026 06:00 AM | 18m 37s | Scheduler |
-| Feb 26, 2026 06:00 AM | 16m 42s | Scheduler |
-| Feb 25, 2026 06:00 AM | 18m 18s | Scheduler |
-| Feb 24, 2026 12:10 PM | 34m 41s | Manual |
 
 ---
 
@@ -300,7 +296,7 @@ Run 2 (next day)   : Watermark found → 0 new files → pipeline exits cleanly
                      No compute wasted
 
 Run 3 (new file)   : green_tripdata_2024-01 detected → only 1 file processed
-                     ~18 minutes instead of full reload → significant compute saving
+                     ~18 minutes instead of full run → significant compute saving
 ```
 
 **Audit Log Table**
@@ -322,7 +318,7 @@ try:
     return count, None                         # SUCCESS path
 except Exception as e:
     error_msg = str(e)[:200]
-    write_audit_log(..., 'FAILED', error_msg)  # log the error
+    write_audit_log(..., 'FAILED', error_msg)  # log it
     continue                                   # skip bad file, keep going
 ```
 
@@ -335,7 +331,7 @@ except Exception as e:
 ### Challenge 1 — Photon Engine Schema Conflict
 **Problem:** VendorID stored as `LONG` in January but `DOUBLE` in subsequent months. Photon's vectorized engine raised `ClassCastException: MutableDouble cannot be cast to MutableLong` on month 8 every run.
 
-**Root Cause:** Reading all 12 files together caused cross-file schema comparison.
+**Root Cause:** Reading all 12 files together caused cross-file schema comparison inside Photon.
 
 **Solution:**
 ```python
@@ -345,21 +341,21 @@ for month in range(1, 13):
     df = df.selectExpr(
         'CAST(VendorID AS DOUBLE) AS VendorID',
         'CAST(fare_amount AS DOUBLE) AS fare_amount',
-        # all 20 columns cast explicitly
+        # all 20 columns cast explicitly per file
     )
     dfs.append(df)
 
 df_all = reduce(lambda a, b: a.unionByName(b), dfs)
 df_all.cache().count()  # force full materialisation before any transform
 ```
-Each file is individually typed before union — Photon never sees a cross-file type difference.
+Each file is typed individually before union — Photon never sees a cross-file type difference.
 
 ---
 
 ### Challenge 2 — Unity Catalog Blocking All ADLS Writes
-**Problem:** Workspace upgraded to Unity Catalog. All Silver and Gold writes failed with `NO_PARENT_EXTERNAL_LOCATION_FOR_PATH`. DBFS root access also disabled.
+**Problem:** Workspace upgraded to Unity Catalog. All Silver and Gold writes failed: `NO_PARENT_EXTERNAL_LOCATION_FOR_PATH`. DBFS root also disabled.
 
-**Solution:** Located existing `unity-catalog-access-connector` managed identity → created `sp_logistics_credential` → registered `gold_external_location` and `silver_external_location` with Read, Write, Delete, List permissions.
+**Solution:** Located existing `unity-catalog-access-connector` managed identity in Azure portal → created `sp_logistics_credential` → registered `gold_external_location` and `silver_external_location` with Read, Write, Delete, List permissions validated.
 
 ---
 
@@ -382,19 +378,18 @@ for month in months:
 
 ## Data Pipeline Metrics
 
-| Metric | Value | Significance |
+| Metric | Value | Detail |
 |---|---|---|
-| Raw Records (Bronze) | 787,060 | 12 monthly TLC files |
+| Raw Records (Bronze) | 787,060 | 12 monthly TLC parquet files |
 | Clean Records (Silver) | 745,796 | 94.8% quality retention |
 | Rejected Records | 41,264 (5.2%) | Zero fare / distance / null vendor / wrong year |
 | Silver Parquet Files | 48 | Partitioned by trip_year / trip_month |
-| Gold Delta Tables | 3 | fact_deliveries + dim_trip_type + dim_trip_zone |
-| Watermark + Audit Tables | 2 | Production observability |
-| Delta Versions | 42 | Full transaction history — all queryable |
-| Total Revenue Analyzed | $13.5M | Sum of fare_amount across 745,796 trips |
-| Longest Pipeline Run | 34m 41s | Feb 24 manual run (full initial load) |
-| Scheduled Run Average | ~18 minutes | Daily incremental runs |
-| Workflow Schedule | 06:00 AM | Asia/Dubai (UTC+04:00) — pre-business-day |
+| Gold Delta Tables | 3 | fact_deliveries + dim_trip_zone + dim_trip_type |
+| Production Tables | 2 | audit_log + watermark |
+| Delta Versions | 42 | Full transaction history |
+| Total Revenue Analyzed | $13.5M | Sum of fare_amount |
+| Avg Pipeline Duration | ~18 min | Confirmed across 8 scheduled runs |
+| Workflow Schedule | 06:00 AM | UTC+04:00 Asia/Dubai |
 
 ---
 
@@ -417,7 +412,7 @@ Payment Split
   Unknown      10.01%  $1.35M   (connectivity failures during payment)
 
 Trip Volume by Time of Day
-  Afternoon  238K  (lunch + school pickup + early commute)
+  Afternoon  238K  (lunch + school + early commute)
   Evening    199K  (commute return + dining)
   Morning    190K  (outbound commute)
   Night      119K  (lowest volume, highest avg fare)
@@ -430,11 +425,11 @@ Trip Volume by Time of Day
 The dashboard connects live to Databricks Gold layer via DirectQuery — no data import, always current:
 
 - **KPI Cards** — Total Revenue ($13.5M) · Total Trips (745.8K) · Avg Cost/Mile ($13.1)
-- **Monthly Revenue bar chart** — Jan through Dec, September peak visible
+- **Monthly Revenue bar chart** — Jan through Dec with September as peak
 - **Revenue by Payment Type donut** — Credit Card 58.93% · Cash 30.78% · Unknown 10.01%
-- **Trips by Time of Day column chart** — Afternoon highest at 238K
-- **Average Fare trend line** — Jan $16.5 → Sep $20.4 → Dec $18.5
-- **Interactive month filter slider** — filters all 5 visuals simultaneously (range 1–12)
+- **Trips by Time of Day column chart** — Afternoon to Night with actual trip counts
+- **Average Fare trend line** — Jan $16.5 rising to Sep $20.4 then Dec $18.5
+- **Interactive month filter slider** — filters all visuals simultaneously (range 1–12)
 
 ---
 
@@ -446,18 +441,18 @@ Security (highest priority)
 └── Databricks secret scope — dbutils.secrets.get()
 
 Architecture
-├── Multi-node auto-scaling cluster (current: single node 4 cores)
+├── Multi-node auto-scaling cluster (current: single node Standard_DC4as_v5)
 ├── Gold table partitioning by trip_year/month (needed at 10M+ records)
 └── Unity Catalog data lineage enabled
 
 Data Quality
 ├── Rejection rate threshold alert (>10% = fail pipeline)
-├── Cross-layer record count reconciliation
-└── Dimension file version history in Delta
+├── Cross-layer reconciliation checks (Bronze vs Silver vs Gold counts)
+└── Dim file version history tracked in Delta
 
 Operations
 ├── Email/Teams alert on pipeline failure
-├── Automatic retry on transient failures
+├── Automatic retry (2 retries, 5-min delay) on transient failures
 └── Git-integrated CI/CD for notebook deployment
 ```
 
@@ -476,7 +471,7 @@ Operations
 
 **Step 1 — Clone repository**
 ```bash
-git clone https://github.com/yourusername/nyc-taxi-azure-data-engineering.git
+git clone https://github.com/Thaadshaayani-R/nyc-taxi-azure-data-engineering.git
 ```
 
 **Step 2 — Create Azure resources**
@@ -491,7 +486,7 @@ Data Factory    : linked to ADLS via service principal
 ```
 raw_data/taxi_zone_lookup.xlsx  →  ADLS raw-data container
 raw_data/trip_type.xlsx         →  ADLS raw-data container
-These are read by nb_gold_delta_tables.ipynb to build dim tables
+(read by nb_gold_delta_tables.ipynb to create dim_trip_zone and dim_trip_type)
 ```
 
 **Step 4 — Configure service principal credentials in notebooks**
@@ -504,37 +499,37 @@ client_secret = 'your-client-secret'
 
 **Step 5 — Register Unity Catalog external locations**
 ```
-Create  : sp_logistics_credential (managed identity access connector)
-Register: gold_external_location   → adlslogisticsstore/gold/
-Register: silver_external_location → adlslogisticsstore/silver/
+Create   : sp_logistics_credential (managed identity access connector)
+Register : gold_external_location   → adlslogisticsstore/gold/
+Register : silver_external_location → adlslogisticsstore/silver/
 Permissions: Read · Write · Delete · List
 ```
 
 **Step 6 — Import notebooks to Databricks workspace**
 ```
-Upload all 5 .ipynb files from notebooks/ folder to Databricks workspace
+Upload all 5 .ipynb notebooks from notebooks/ folder to Databricks workspace
 ```
 
 **Step 7 — Import ADF pipeline**
 ```
-Data Factory → Author → Connections → Import ARM template
-Use files from adf_pipeline/ folder
+Data Factory → Author → ARM Template → Import
+Upload files from adf_pipeline/ folder (pipeline + dataset + linkedService)
 ```
 
 **Step 8 — Run pipeline in order**
 ```
-ADF Pipeline (Bronze ingestion)  →
-nb_silver_cleanse_deliveries     →
-nb_gold_delta_tables             →
-nb_merge_incremental             →
+ADF Pipeline (Bronze ingestion)     →
+nb_silver_cleanse_deliveries        →
+nb_gold_delta_tables                →
+nb_merge_incremental                →
 nb_audit_log
 ```
 
 **Step 9 — Connect Power BI**
 ```
-Open: powerbi/nyc_taxi_analytics_dashboard.pbix
-Update: Databricks connection → your workspace hostname + HTTP path
-Auth  : Personal Access Token
+Open   : powerbi/nyc_taxi_analytics_dashboard.pbix
+Update : Databricks connection → your workspace hostname + HTTP path
+Auth   : Personal Access Token
 ```
 
 ---
@@ -544,8 +539,8 @@ Auth  : Personal Access Token
 **Thadshayani Rasanehru**
 Senior Data Engineer | Azure | Databricks | PySpark | Delta Lake | Power BI
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0077B5?style=flat&logo=linkedin)](https://www.linkedin.com/in/thaadshaayani-rasanehru/))
-[![GitHub](https://img.shields.io/badge/GitHub-Follow-181717?style=flat&logo=github)](https://github.com/Thaadshaayani-R))
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0077B5?style=flat&logo=linkedin)](https://www.linkedin.com/in/thaadshaayani-rasanehru/)
+[![GitHub](https://img.shields.io/badge/GitHub-Follow-181717?style=flat&logo=github)](https://github.com/Thaadshaayani-R)
 
 ---
 
